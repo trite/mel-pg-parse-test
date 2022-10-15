@@ -21,10 +21,33 @@ type selectStmt = {
 /*   updateStmt: unk */
 /* } */
 
-type stmt =
-  | SelectStmt(selectStmt)
-  | UpdateStmt(unk)
-;
+/* type stmt = [ */
+/*   | [@bs.as "SelectStmtrrrr"] `SelectStmt(innerSelectStmt) */
+/*   | `UpdateStmt(unk) */
+/* ]; */
+/* type stmt = */
+/*   | SelectStmt(innerSelectStmt) */
+/*   | UpdateStmt(unk) */
+/* ; */
+
+/* [@bs.unwrap] */
+
+/* [@bs.deriving accessors] */
+/* type stmt = */
+/*   | SelectStmt(selectStmt) */
+/*   | UpdateStmt(unk) */
+/* ; */
+type stmt = [
+  | `selectStmt(innerSelectStmt)
+  | `other(string)
+];
+
+/* [@bs.val] */
+/* external stmtTest: */
+/*   [@bs.unwrap] [ */
+/*     | `selectStmt(innerSelectStmt) */
+/*     | `other(string) */
+/*   ] = "blah"; */
 
 type rawStmt = {
   stmt: stmt,
@@ -38,6 +61,15 @@ type outerRawStmt = {
 };
 
 type t = array(outerRawStmt);
+
+%raw {|
+   function wrappedParse(blah) {
+     console.log(PgsqlParser.parse(blah));
+   }
+|}
+external wrappedParse : string => unit = "wrappedParse";
+
+wrappedParse("SELECT * FROM blah;");
 
 [@bs.module "pgsql-parser"] external parse : string => t = "parse";
 /* [@bs.module "pgsql-parser"] external deparse : t => string = "deparse"; */
@@ -110,10 +142,21 @@ Js.log(test[0].rawStmt);
 }
 */
 
+Js.log(test[0].rawStmt.stmt);
+
 switch(test[0].rawStmt.stmt) {
-| UpdateStmt(y) => Js.log(("Update Statement", y))
-| SelectStmt(x) => Js.log(("Select Statement", x))
+| `selectStmt(x) => Js.log(("Select Statement", x))
+| `other(x) => Js.log(("other", x))
 };
+
+
+/* switch(test[0].rawStmt.stmt) { */
+/* | UpdateStmt(y) => Js.log(("Update Statement", y)) */
+/* | SelectStmt(x) => Js.log(("Select Statement", x)) */
+/* }; */
+
+/* Js.log(test[0].rawStmt.stmt) */
+
 /*
 [ 'Update Statement', undefined ]
 */
