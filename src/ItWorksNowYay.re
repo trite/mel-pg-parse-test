@@ -1,31 +1,52 @@
 type unk;
 
-type innerSelectStmt = {
-  fromClause: unk,
-  targetList: unk,
-  whereClause: unk,
-  limitCount: unk,
-  limitOption: string,
-  op: string,
-};
+/* type selectStmt = { */
+/*   fromClause: unk, */
+/*   targetList: unk, */
+/*   whereClause: unk, */
+/*   limitCount: unk, */
+/*   limitOption: string, */
+/*   op: string, */
+/* }; */
 
 type selectStmt = {
-  [@bs.as "SelectStmt"]
-  inner: innerSelectStmt
+  distinctClause: unk,
+  intoClause: unk,
+  targetList: unk,
+  fromClause: unk,
+  whereClause: unk,
+  groupClause: unk,
+  havingClause: unk,
+  windowClause: unk,
+  valuesLists: unk,
+  sortClause: unk,
+  limitOffset: unk,
+  limitCount: unk,
+  lockingClause: unk,
+  withClause: unk,
+  op: unk,
+  all: unk,
+  larg: unk,
+  rarg: unk,
 };
-
-type innerInsertStmt = unk;
 
 type insertStmt = {
-  [@bs.as "InsertStmt"]
-  inner: innerInsertStmt
+  relation: unk,
+  cols: unk,
+  selectStmt: unk,
+  onConflictClause: unk,
+  returningList: unk,
+  withClause: unk,
+  override: unk,
 };
 
-type innerUpdateStmt = unk;
-
 type updateStmt = {
-  [@bs.as "UpdateStmt"]
-  inner: innerUpdateStmt
+  relation: unk,
+  targetList: unk,
+  whereClause: unk,
+  fromClause: unk,
+  returningList: unk,
+  withClause: unk,
 };
 
 type stmt = [
@@ -34,6 +55,7 @@ type stmt = [
   | `UpdateStmt(updateStmt)
   | `other(unk)
 ];
+
 
 type rawStmt = {
   stmt: stmt,
@@ -115,9 +137,9 @@ parsed
 -> Belt_Array.forEach(
   item =>
   switch(item.rawStmt.stmt) {
-  | `SelectStmt(x) => Js.log(("Select Statement", x))
-  | `UpdateStmt(x) => Js.log(("Update Statement", x))
-  | `InsertStmt(x) => Js.log(("Insert Statement", x))
+  | `SelectStmt(x) => Js.log(("Select Statement", x.fromClause))
+  | `UpdateStmt(x) => Js.log(("Update Statement", x.targetList))
+  | `InsertStmt(x) => Js.log(("Insert Statement", x.override))
   | `other(x) => Js.log(("other", x))
   }
 );
