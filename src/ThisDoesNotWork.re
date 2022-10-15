@@ -64,12 +64,34 @@ type t = array(outerRawStmt);
 
 %raw {|
    function wrappedParse(blah) {
-     console.log(PgsqlParser.parse(blah));
-   }
-|}
-external wrappedParse : string => unit = "wrappedParse";
+     /* console.log(PgsqlParser.parse(blah)); */
+     var parsed = PgsqlParser.parse(blah);
+     /* console.log(parsed[0]); */
+     for (var i = 0; i < parsed.length; i++) {
+       /* console.log(("something", parsed[i].RawStmt.stmt)); */
+       /* parsed[i].RawStmt.stmt.NAME =  */
+       /* for (key in parsed[i].RawStmt.stmt) {console.log(key)} */
 
-wrappedParse("SELECT * FROM blah;");
+       /* getting key names: */
+       /* console.log(Object.keys(parsed[i].RawStmt.stmt)); */
+
+       /* getting first key name: */
+       /* console.log("first key name:", Object.keys(parsed[i].RawStmt.stmt)[0]); */
+
+       /* adding `NAME`:  */
+       parsed[i].RawStmt.stmt.NAME = Object.keys(parsed[i].RawStmt.stmt)[0];
+     }
+     return parsed
+   }
+|};
+external wrappedParse : string => t = "wrappedParse";
+
+wrappedParse({|
+  SELECT * FROM blah;
+  UPDATE something SET blah = 1 WHERE foo = bar;
+|})[0].rawStmt
+/* |> ignore; */
+|> Js.log;
 
 [@bs.module "pgsql-parser"] external parse : string => t = "parse";
 /* [@bs.module "pgsql-parser"] external deparse : t => string = "deparse"; */
@@ -107,7 +129,7 @@ let test = parse({|
   ;
 |});
 
-Js.log(test);
+/* Js.log(test); */
 /*
 [
   { RawStmt: { stmt: [Object], stmt_len: 151, stmt_location: 0 } },
@@ -117,14 +139,14 @@ Js.log(test);
 ]
 */
 
-Js.log(test[0]);
+/* Js.log(test[0]); */
 /*
 {
   RawStmt: { stmt: { SelectStmt: [Object] }, stmt_len: 151, stmt_location: 0 }
 }
 */
 
-Js.log(test[0].rawStmt);
+/* Js.log(test[0].rawStmt); */
 /*
 {
   stmt: {
@@ -142,12 +164,12 @@ Js.log(test[0].rawStmt);
 }
 */
 
-Js.log(test[0].rawStmt.stmt);
+/* Js.log(test[0].rawStmt.stmt); */
 
-switch(test[0].rawStmt.stmt) {
-| `selectStmt(x) => Js.log(("Select Statement", x))
-| `other(x) => Js.log(("other", x))
-};
+/* switch(test[0].rawStmt.stmt) { */
+/* | `selectStmt(x) => Js.log(("Select Statement", x)) */
+/* | `other(x) => Js.log(("other", x)) */
+/* }; */
 
 
 /* switch(test[0].rawStmt.stmt) { */
