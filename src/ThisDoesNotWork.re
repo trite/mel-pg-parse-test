@@ -38,7 +38,7 @@ type selectStmt = {
 /*   | UpdateStmt(unk) */
 /* ; */
 type stmt = [
-  | `selectStmt(innerSelectStmt)
+  | `SelectStmt(selectStmt)
   | `other(string)
 ];
 
@@ -64,22 +64,19 @@ type t = array(outerRawStmt);
 
 %raw {|
    function wrappedParse(blah) {
-     /* console.log(PgsqlParser.parse(blah)); */
      var parsed = PgsqlParser.parse(blah);
-     /* console.log(parsed[0]); */
      for (var i = 0; i < parsed.length; i++) {
-       /* console.log(("something", parsed[i].RawStmt.stmt)); */
-       /* parsed[i].RawStmt.stmt.NAME =  */
-       /* for (key in parsed[i].RawStmt.stmt) {console.log(key)} */
-
-       /* getting key names: */
-       /* console.log(Object.keys(parsed[i].RawStmt.stmt)); */
-
-       /* getting first key name: */
-       /* console.log("first key name:", Object.keys(parsed[i].RawStmt.stmt)[0]); */
-
+       /* get key name: */
+       var keyName = Object.keys(parsed[i].RawStmt.stmt)[0];
        /* adding `NAME`:  */
-       parsed[i].RawStmt.stmt.NAME = Object.keys(parsed[i].RawStmt.stmt)[0];
+       parsed[i].RawStmt.stmt.NAME = keyName;
+
+       /* adding `VAL`: */
+       parsed[i].RawStmt.stmt.VAL = parsed[i].RawStmt.stmt[keyName];
+
+       /* sanity check: VAL is just a reference to the same data right? */
+       /* and indeed it is updated in both places, so this shouldn't be too risky... right? */
+       parsed[i].RawStmt.stmt.VAL.op = 'tacos';
      }
      return parsed
    }
@@ -93,9 +90,9 @@ wrappedParse({|
 /* |> ignore; */
 |> Js.log;
 
-[@bs.module "pgsql-parser"] external parse : string => t = "parse";
-/* [@bs.module "pgsql-parser"] external deparse : t => string = "deparse"; */
-let test = parse({|
+/* [@bs.module "pgsql-parser"] external parse : string => t = "parse"; */
+[@bs.module "pgsql-parser"] external deparse : t => string = "deparse";
+let test = wrappedParse({|
   SELECT
     a.id,
     b.id,
@@ -166,11 +163,15 @@ let test = parse({|
 
 /* Js.log(test[0].rawStmt.stmt); */
 
-/* switch(test[0].rawStmt.stmt) { */
-/* | `selectStmt(x) => Js.log(("Select Statement", x)) */
-/* | `other(x) => Js.log(("other", x)) */
-/* }; */
+switch(test[0].rawStmt.stmt) {
+| `SelectStmt(x) => Js.log(("Select Statement", x))
+| `other(x) => Js.log(("other", x))
+};
 
+
+/* Js.log(test |> deparse); */
+
+let roggle = test |> deparse;
 
 /* switch(test[0].rawStmt.stmt) { */
 /* | UpdateStmt(y) => Js.log(("Update Statement", y)) */
