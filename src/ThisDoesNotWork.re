@@ -14,40 +14,26 @@ type selectStmt = {
   inner: innerSelectStmt
 };
 
-/* type stmt = { */
-/*   [@bs.as "SelectStmt"] */
-/*   selectStmt: innerSelectStmt, */
-/*   [@bs.as "UpdateStmt"] */
-/*   updateStmt: unk */
-/* } */
+type innerInsertStmt = unk;
 
-/* type stmt = [ */
-/*   | [@bs.as "SelectStmtrrrr"] `SelectStmt(innerSelectStmt) */
-/*   | `UpdateStmt(unk) */
-/* ]; */
-/* type stmt = */
-/*   | SelectStmt(innerSelectStmt) */
-/*   | UpdateStmt(unk) */
-/* ; */
+type insertStmt = {
+  [@bs.as "InsertStmt"]
+  inner: innerInsertStmt
+};
 
-/* [@bs.unwrap] */
+type innerUpdateStmt = unk;
 
-/* [@bs.deriving accessors] */
-/* type stmt = */
-/*   | SelectStmt(selectStmt) */
-/*   | UpdateStmt(unk) */
-/* ; */
+type updateStmt = {
+  [@bs.as "UpdateStmt"]
+  inner: innerUpdateStmt
+};
+
 type stmt = [
   | `SelectStmt(selectStmt)
-  | `other(string)
+  | `InsertStmt(insertStmt)
+  | `UpdateStmt(updateStmt)
+  | `other(unk)
 ];
-
-/* [@bs.val] */
-/* external stmtTest: */
-/*   [@bs.unwrap] [ */
-/*     | `selectStmt(innerSelectStmt) */
-/*     | `other(string) */
-/*   ] = "blah"; */
 
 type rawStmt = {
   stmt: stmt,
@@ -68,31 +54,21 @@ type t = array(outerRawStmt);
      for (var i = 0; i < parsed.length; i++) {
        /* get key name: */
        var keyName = Object.keys(parsed[i].RawStmt.stmt)[0];
+
        /* adding `NAME`:  */
        parsed[i].RawStmt.stmt.NAME = keyName;
 
        /* adding `VAL`: */
        parsed[i].RawStmt.stmt.VAL = parsed[i].RawStmt.stmt[keyName];
-
-       /* sanity check: VAL is just a reference to the same data right? */
-       /* and indeed it is updated in both places, so this shouldn't be too risky... right? */
-       parsed[i].RawStmt.stmt.VAL.op = 'tacos';
      }
      return parsed
    }
 |};
 external wrappedParse : string => t = "wrappedParse";
 
-wrappedParse({|
-  SELECT * FROM blah;
-  UPDATE something SET blah = 1 WHERE foo = bar;
-|})[0].rawStmt
-/* |> ignore; */
-|> Js.log;
 
-/* [@bs.module "pgsql-parser"] external parse : string => t = "parse"; */
 [@bs.module "pgsql-parser"] external deparse : t => string = "deparse";
-let test = wrappedParse({|
+let parsed = wrappedParse({|
   SELECT
     a.id,
     b.id,
@@ -126,60 +102,20 @@ let test = wrappedParse({|
   ;
 |});
 
-/* Js.log(test); */
-/*
-[
-  { RawStmt: { stmt: [Object], stmt_len: 151, stmt_location: 0 } },
-  { RawStmt: { stmt: [Object], stmt_len: 35, stmt_location: 152 } },
-  { RawStmt: { stmt: [Object], stmt_len: 110, stmt_location: 188 } },
-  { RawStmt: { stmt: [Object], stmt_len: 73, stmt_location: 299 } }
-]
-*/
+// Don't necessarily print anything here yet, but running this does 2 things:
+//  1. `require("pgsql-parser")`
+//      a sign I am doing something wrong probably
+//  2. make sure I'm not doing something that breaks the deparse process
+//      which is the point of this entire exercise
+let roggle = parsed |> deparse;
 
-/* Js.log(test[0]); */
-/*
-{
-  RawStmt: { stmt: { SelectStmt: [Object] }, stmt_len: 151, stmt_location: 0 }
-}
-*/
-
-/* Js.log(test[0].rawStmt); */
-/*
-{
-  stmt: {
-    SelectStmt: {
-      targetList: [Array],
-      fromClause: [Array],
-      whereClause: [Object],
-      limitCount: [Object],
-      limitOption: 'LIMIT_OPTION_COUNT',
-      op: 'SETOP_NONE'
-    }
-  },
-  stmt_len: 151,
-  stmt_location: 0
-}
-*/
-
-/* Js.log(test[0].rawStmt.stmt); */
-
-switch(test[0].rawStmt.stmt) {
-| `SelectStmt(x) => Js.log(("Select Statement", x))
-| `other(x) => Js.log(("other", x))
-};
-
-
-/* Js.log(test |> deparse); */
-
-let roggle = test |> deparse;
-
-/* switch(test[0].rawStmt.stmt) { */
-/* | UpdateStmt(y) => Js.log(("Update Statement", y)) */
-/* | SelectStmt(x) => Js.log(("Select Statement", x)) */
-/* }; */
-
-/* Js.log(test[0].rawStmt.stmt) */
-
-/*
-[ 'Update Statement', undefined ]
-*/
+parsed
+-> Belt_Array.forEach(
+  item =>
+  switch(item.rawStmt.stmt) {
+  | `SelectStmt(x) => Js.log(("Select Statement", x))
+  | `UpdateStmt(x) => Js.log(("Update Statement", x))
+  | `InsertStmt(x) => Js.log(("Insert Statement", x))
+  | `other(x) => Js.log(("other", x))
+  }
+);
