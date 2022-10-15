@@ -49,19 +49,21 @@ type outerRawStmt = {
 type t = array(outerRawStmt);
 
 %raw {|
-   function wrappedParse(blah) {
-     var parsed = PgsqlParser.parse(blah);
-     for (var i = 0; i < parsed.length; i++) {
+   function wrappedParse(toParse) {
+     var rawParsed = PgsqlParser.parse(toParse);
+
+     for (var i = 0; i < rawParsed.length; i++) {
        /* get key name: */
-       var keyName = Object.keys(parsed[i].RawStmt.stmt)[0];
+       var keyName = Object.keys(rawParsed[i].RawStmt.stmt)[0];
 
        /* adding `NAME`:  */
-       parsed[i].RawStmt.stmt.NAME = keyName;
+       rawParsed[i].RawStmt.stmt.NAME = keyName;
 
        /* adding `VAL`: */
-       parsed[i].RawStmt.stmt.VAL = parsed[i].RawStmt.stmt[keyName];
+       rawParsed[i].RawStmt.stmt.VAL = rawParsed[i].RawStmt.stmt[keyName];
      }
-     return parsed
+
+     return rawParsed
    }
 |};
 external wrappedParse : string => t = "wrappedParse";
