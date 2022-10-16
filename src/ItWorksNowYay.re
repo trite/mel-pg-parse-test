@@ -1,13 +1,21 @@
 type unk;
 
-/* type selectStmt = { */
-/*   fromClause: unk, */
-/*   targetList: unk, */
-/*   whereClause: unk, */
-/*   limitCount: unk, */
-/*   limitOption: string, */
-/*   op: string, */
+/* type node = { */
+
 /* }; */
+
+type resTarget = {
+  name: unk,
+  indirection: unk,
+  [@bs.as "val"]_val: unk
+};
+
+type a_expr = {
+  kind: unk,
+  name: unk,
+  lexpr: unk,
+  rexpr: unk,
+};
 
 type selectStmt = {
   distinctClause: unk,
@@ -56,7 +64,8 @@ type stmt = [
   | `other(unk)
 ];
 
-
+// https://docs.rs/postgres-parser/0.0.4/postgres_parser/nodes/struct.RawStmt.html
+// or https://docs.rs/crate/postgres-parser/latest/source/src/nodes.rs
 type rawStmt = {
   stmt: stmt,
   stmt_len: int,
@@ -75,14 +84,16 @@ type t = array(outerRawStmt);
      var rawParsed = PgsqlParser.parse(toParse);
 
      for (var i = 0; i < rawParsed.length; i++) {
-       /* get key name: */
-       var keyName = Object.keys(rawParsed[i].RawStmt.stmt)[0];
+       if (Object.keys(rawParsed[i].RawStmt.stmt).length === 1) {
+         /* get key name: */
+         var keyName = Object.keys(rawParsed[i].RawStmt.stmt)[0];
 
-       /* adding `NAME`:  */
-       rawParsed[i].RawStmt.stmt.NAME = keyName;
+         /* adding `NAME`:  */
+         rawParsed[i].RawStmt.stmt.NAME = keyName;
 
-       /* adding `VAL`: */
-       rawParsed[i].RawStmt.stmt.VAL = rawParsed[i].RawStmt.stmt[keyName];
+         /* adding `VAL`: */
+         rawParsed[i].RawStmt.stmt.VAL = rawParsed[i].RawStmt.stmt[keyName];
+       }
      }
 
      return rawParsed
@@ -137,9 +148,16 @@ parsed
 -> Belt_Array.forEach(
   item =>
   switch(item.rawStmt.stmt) {
-  | `SelectStmt(x) => Js.log(("Select Statement", x.fromClause))
-  | `UpdateStmt(x) => Js.log(("Update Statement", x.targetList))
-  | `InsertStmt(x) => Js.log(("Insert Statement", x.override))
-  | `other(x) => Js.log(("other", x))
+  | `SelectStmt(x) =>
+      Js.log(("Select Statement", x.whereClause))
+
+  | `UpdateStmt(x) =>
+      Js.log(("Update Statement", x.targetList))
+
+  | `InsertStmt(x) =>
+      Js.log(("Insert Statement", x.override))
+
+  | `other(_) =>
+      Js.Exn.raiseError("Unexpected statement type!")
   }
 );
